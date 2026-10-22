@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://byypxax6d3781"]
+
+[ext_resource type="Script" uid="uid://cofh2wdduan3l" path="res://scripts/player.gd" id="1_p4iec"]
+[ext_resource type="Texture2D" uid="uid://citmp0nseeyhs" path="res://assets/wick_light.png" id="2_tfd6i"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_08j7w"]
+radius = 9.0
+
+[node name="Wick" type="CharacterBody2D" unique_id=2046804106]
+script = ExtResource("1_p4iec")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=206406370]
+shape = SubResource("CapsuleShape2D_08j7w")
+
+[node name="Visual" type="Node2D" parent="." unique_id=274364264]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=49127858]
+position_smoothing_enabled = true
+
+[node name="WickLight" type="PointLight2D" parent="." unique_id=604801802]
+color = Color(1, 0.81960785, 0.5411765, 1)
+energy = 1.28
+texture = ExtResource("2_tfd6i")
+texture_scale = 3.0
