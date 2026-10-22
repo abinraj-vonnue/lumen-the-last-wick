@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://wpp3nqi6sxlc"]
+
+[ext_resource type="PackedScene" uid="uid://byypxax6d3781" path="res://scenes/player/wick.tscn" id="1_jbqir"]
+[ext_resource type="PackedScene" uid="uid://c1521hejctgp4" path="res://scenes/objects/light_platform.tscn" id="2_yautc"]
+[ext_resource type="PackedScene" path="res://scenes/objects/level_exist.tscn" id="3_fr1um"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jbqir"]
+size = Vector2(1280, 80)
+
+[node name="TestLevel" type="Node2D" unique_id=1793912711]
+
+[node name="Background" type="ColorRect" parent="." unique_id=863668049]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0627451, 0.078431375, 0.14901961, 1)
+
+[node name="World" type="Node2D" parent="." unique_id=521039812]
+
+[node name="Wick" parent="World" unique_id=2046804106 instance=ExtResource("1_jbqir")]
+position = Vector2(200, 560)
+
+[node name="Floor" type="StaticBody2D" parent="World" unique_id=1351533390]
+position = Vector2(640, 620)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Floor" unique_id=1704647887]
+shape = SubResource("RectangleShape2D_jbqir")
+
+[node name="Visual" type="Polygon2D" parent="World/Floor" unique_id=1232088741]
+color = Color(0.20392157, 0.22352941, 0.30980393, 1)
+polygon = PackedVector2Array(-640, -40, 640, -40, 640, 40, -640, 40)
+
+[node name="LightPlatform" parent="World" unique_id=1719528808 instance=ExtResource("2_yautc")]
+position = Vector2(450, 500)
+light_source_path = NodePath("../Wick/WickLight")
+
+[node name="LightPlatform2" parent="World" unique_id=207346298 instance=ExtResource("2_yautc")]
+position = Vector2(700, 440)
+light_source_path = NodePath("../Wick/WickLight")
+
+[node name="LevelExit" parent="World" unique_id=2050264204 instance=ExtResource("3_fr1um")]
+position = Vector2(950, 520)
+
+[node name="CameraLimits" type="Marker2D" parent="." unique_id=208786864]
+position = Vector2(448, 121)
+
+[node name="WorldDarkness" type="CanvasModulate" parent="." unique_id=806115251]
+color = Color(0.0627451, 0.078431375, 0.14901961, 1)
