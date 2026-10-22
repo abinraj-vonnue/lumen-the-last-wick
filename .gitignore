@@ -1,0 +1,11 @@
+# Godot generated files
+.godot/
+
+# Exported builds
+build/
+export.cfg
+export_presets.cfg
+
+# Editor and OS files
+.DS_Store
+*.tmp
