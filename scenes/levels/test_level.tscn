@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://wpp3nqi6sxlc"]
+[gd_scene load_steps=10 format=3 uid="uid://wpp3nqi6sxlc"]
 
 [ext_resource type="PackedScene" uid="uid://byypxax6d3781" path="res://scenes/player/wick.tscn" id="1_jbqir"]
 [ext_resource type="PackedScene" uid="uid://c1521hejctgp4" path="res://scenes/objects/light_platform.tscn" id="2_yautc"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/level_controller.gd" id="4_controller"]
 [ext_resource type="PackedScene" path="res://scenes/objects/hazard.tscn" id="5_hazard"]
 [ext_resource type="PackedScene" path="res://scenes/objects/checkpoint.tscn" id="6_checkpoint"]
+[ext_resource type="PackedScene" path="res://scenes/objects/flare_switch.tscn" id="7_flare_switch"]
+[ext_resource type="PackedScene" path="res://scenes/objects/flare_gate.tscn" id="8_flare_gate"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jbqir"]
 size = Vector2(1280, 80)
@@ -45,12 +47,23 @@ light_source_path = NodePath("../Wick/WickLight")
 position = Vector2(700, 440)
 light_source_path = NodePath("../Wick/WickLight")
 
+[node name="FlarePlatform" parent="World" instance=ExtResource("2_yautc")]
+position = Vector2(600, 330)
+light_source_path = NodePath("../Wick/WickLight")
+
 [node name="Hazard" parent="World" instance=ExtResource("5_hazard")]
 position = Vector2(560, 566)
-size = Vector2(120, 24)
+size = Vector2(190, 24)
 
 [node name="Checkpoint" parent="World" instance=ExtResource("6_checkpoint")]
 position = Vector2(790, 545)
+
+[node name="FlareSwitch" parent="World" instance=ExtResource("7_flare_switch")]
+position = Vector2(830, 500)
+activation_distance = 420.0
+
+[node name="FlareGate" parent="World" instance=ExtResource("8_flare_gate")]
+position = Vector2(900, 532)
 
 [node name="LevelExit" parent="World" unique_id=2050264204 instance=ExtResource("3_fr1um")]
 position = Vector2(950, 520)
@@ -60,3 +73,5 @@ position = Vector2(448, 121)
 
 [node name="WorldDarkness" type="CanvasModulate" parent="." unique_id=806115251]
 color = Color(0.0627451, 0.078431375, 0.14901961, 1)
+
+[connection signal="activated" from="World/FlareSwitch" to="World/FlareGate" method="open"]
