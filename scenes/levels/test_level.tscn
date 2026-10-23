@@ -1,13 +1,17 @@
-[gd_scene format=3 uid="uid://wpp3nqi6sxlc"]
+[gd_scene load_steps=8 format=3 uid="uid://wpp3nqi6sxlc"]
 
 [ext_resource type="PackedScene" uid="uid://byypxax6d3781" path="res://scenes/player/wick.tscn" id="1_jbqir"]
 [ext_resource type="PackedScene" uid="uid://c1521hejctgp4" path="res://scenes/objects/light_platform.tscn" id="2_yautc"]
-[ext_resource type="PackedScene" path="res://scenes/objects/level_exist.tscn" id="3_fr1um"]
+[ext_resource type="PackedScene" uid="uid://u8p3cc13om2" path="res://scenes/objects/level_exist.tscn" id="3_fr1um"]
+[ext_resource type="Script" path="res://scripts/level_controller.gd" id="4_controller"]
+[ext_resource type="PackedScene" path="res://scenes/objects/hazard.tscn" id="5_hazard"]
+[ext_resource type="PackedScene" path="res://scenes/objects/checkpoint.tscn" id="6_checkpoint"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jbqir"]
 size = Vector2(1280, 80)
 
 [node name="TestLevel" type="Node2D" unique_id=1793912711]
+script = ExtResource("4_controller")
 
 [node name="Background" type="ColorRect" parent="." unique_id=863668049]
 anchors_preset = 15
@@ -40,6 +44,13 @@ light_source_path = NodePath("../Wick/WickLight")
 [node name="LightPlatform2" parent="World" unique_id=207346298 instance=ExtResource("2_yautc")]
 position = Vector2(700, 440)
 light_source_path = NodePath("../Wick/WickLight")
+
+[node name="Hazard" parent="World" instance=ExtResource("5_hazard")]
+position = Vector2(560, 566)
+size = Vector2(120, 24)
+
+[node name="Checkpoint" parent="World" instance=ExtResource("6_checkpoint")]
+position = Vector2(790, 545)
 
 [node name="LevelExit" parent="World" unique_id=2050264204 instance=ExtResource("3_fr1um")]
 position = Vector2(950, 520)
