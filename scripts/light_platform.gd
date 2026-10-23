@@ -15,6 +15,10 @@ extends StaticBody2D
 var _is_active: bool = false
 var _light_source: Node2D
 var _ray_query: PhysicsRayQueryParameters2D
+var _time: float = 0.0
+var _dormant_outline: Polygon2D
+var _rune_core: Polygon2D
+var _aura_glow: Polygon2D
 
 
 func _ready() -> void:
@@ -22,6 +26,7 @@ func _ready() -> void:
 	visual.visible = true
 	visual.modulate = inactive_color
 	visual.modulate.a = 0.0
+	_build_rune_slab_art()
 	platform_collision.set_deferred("disabled", true)
 	_light_source = get_node_or_null(light_source_path) as Node2D
 	var excluded: Array[RID] = [get_rid()]
@@ -36,7 +41,53 @@ func _ready() -> void:
 	_ray_query.collide_with_areas = false
 
 
+func _build_rune_slab_art() -> void:
+	# Bevelled floating stone rune-slab silhouette inside the Visual node
+	visual.color = Color("#9b92dc")
+	visual.polygon = PackedVector2Array([
+		Vector2(-90, -6), Vector2(-82, -10), Vector2(82, -10), Vector2(90, -6),
+		Vector2(86, 6), Vector2(72, 11), Vector2(0, 13), Vector2(-72, 11), Vector2(-86, 6),
+	])
+
+	var top_trim := Polygon2D.new()
+	top_trim.color = Color(1.0, 0.92, 0.76, 0.85)
+	top_trim.polygon = PackedVector2Array([
+		Vector2(-82, -10), Vector2(82, -10), Vector2(78, -6), Vector2(-78, -6),
+	])
+	visual.add_child(top_trim)
+
+	_rune_core = Polygon2D.new()
+	_rune_core.color = Color(1.0, 0.86, 0.52, 0.9)
+	_rune_core.polygon = PackedVector2Array([
+		Vector2(-52, -2), Vector2(0, -5), Vector2(52, -2),
+		Vector2(36, 3), Vector2(0, 5), Vector2(-36, 3),
+	])
+	visual.add_child(_rune_core)
+
+	var add_mat := CanvasItemMaterial.new()
+	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_aura_glow = Polygon2D.new()
+	_aura_glow.color = Color(0.95, 0.78, 0.45, 0.24)
+	_aura_glow.material = add_mat
+	_aura_glow.z_index = -1
+	_aura_glow.polygon = PackedVector2Array([
+		Vector2(-98, -14), Vector2(98, -14), Vector2(92, 18), Vector2(-92, 18),
+	])
+	visual.add_child(_aura_glow)
+
+	# Subtle dormant astral trace so players can read unlit platform locations
+	_dormant_outline = Polygon2D.new()
+	_dormant_outline.name = "DormantTrace"
+	_dormant_outline.color = Color(0.48, 0.52, 0.78, 0.22)
+	_dormant_outline.z_index = -2
+	_dormant_outline.polygon = PackedVector2Array([
+		Vector2(-86, -8), Vector2(86, -8), Vector2(82, 8), Vector2(-82, 8),
+	])
+	add_child(_dormant_outline)
+
+
 func _physics_process(delta: float) -> void:
+	_time += delta
 	var should_activate := false
 
 	if is_instance_valid(_light_source):
@@ -58,6 +109,10 @@ func _physics_process(delta: float) -> void:
 		Color(target_color, target_alpha),
 		minf(fade_speed * delta, 1.0)
 	)
+	if _dormant_outline != null:
+		var dormant_pulse := 0.18 + sin(_time * 2.6 + global_position.x * 0.02) * 0.06
+		_dormant_outline.color.a = lerpf(dormant_pulse, 0.0, visual.modulate.a)
+
 
 func _closest_platform_point() -> Vector2:
 	var rectangle := platform_collision.shape as RectangleShape2D
@@ -86,3 +141,6 @@ func _set_active(active: bool) -> void:
 
 	_is_active = active
 	platform_collision.set_deferred("disabled", not active)
+	var audio := get_node_or_null("/root/AudioDirector")
+	if audio != null and audio.has_method("play_sfx"):
+		audio.call("play_sfx", "platform_on" if active else "platform_off", 0.65)

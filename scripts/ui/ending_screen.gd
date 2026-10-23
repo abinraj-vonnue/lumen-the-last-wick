@@ -4,6 +4,9 @@ const MenuLayout = preload("res://scripts/ui/menu_layout.gd")
 
 
 func _ready() -> void:
+	var audio := get_node_or_null("/root/AudioDirector")
+	if audio != null and audio.has_method("set_stage_mood"):
+		audio.call("set_stage_mood", 5, true)
 	var menu := MenuLayout.create(self, "The Last Wick", "The final flame catches. For one quiet moment, the dark remembers the dawn.")
 	MenuLayout.add_button(menu, "Return to Title", GameFlow.return_to_title)
 	MenuLayout.add_button(menu, "Begin Again", GameFlow.start_new_game)

@@ -22,7 +22,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0627451, 0.078431375, 0.14901961, 1)
+color = Color(0.0470588, 0.0588235, 0.117647, 1)
 
 [node name="World" type="Node2D" parent="." unique_id=521039812]
 
@@ -36,8 +36,16 @@ position = Vector2(640, 620)
 shape = SubResource("RectangleShape2D_jbqir")
 
 [node name="Visual" type="Polygon2D" parent="World/Floor" unique_id=1232088741]
-color = Color(0.20392157, 0.22352941, 0.30980393, 1)
-polygon = PackedVector2Array(-640, -40, 640, -40, 640, 40, -640, 40)
+color = Color(0.141176, 0.160784, 0.247059, 1)
+polygon = PackedVector2Array(-640, -40, -320, -42, 0, -39, 320, -42, 640, -40, 648, 12, 632, 48, 300, 56, 0, 46, -340, 54, -636, 44, -646, 10)
+
+[node name="RimHighlight" type="Polygon2D" parent="World/Floor"]
+color = Color(0.321569, 0.364706, 0.509804, 1)
+polygon = PackedVector2Array(-640, -40, -320, -42, 0, -39, 320, -42, 640, -40, 640, -32, 320, -34, 0, -31, -320, -34, -640, -32)
+
+[node name="UnderShadow" type="Polygon2D" parent="World/Floor"]
+color = Color(0.0705882, 0.0823529, 0.141176, 1)
+polygon = PackedVector2Array(-640, -14, 640, -14, 632, 48, 300, 56, 0, 46, -340, 54, -636, 44)
 
 [node name="LightPlatform" parent="World" unique_id=1719528808 instance=ExtResource("2_yautc")]
 position = Vector2(450, 500)
@@ -72,6 +80,6 @@ position = Vector2(950, 520)
 position = Vector2(448, 121)
 
 [node name="WorldDarkness" type="CanvasModulate" parent="." unique_id=806115251]
-color = Color(0.0627451, 0.078431375, 0.14901961, 1)
+color = Color(0.411765, 0.439216, 0.560784, 1)
 
 [connection signal="activated" from="World/FlareSwitch" to="World/FlareGate" method="open"]
