@@ -75,6 +75,14 @@ func run_checks() -> void:
 	if pause_menu == null or not paused:
 		_fail("the pause action should open a menu and pause gameplay")
 		return
+	controller.call("_unhandled_input", pause_event)
+	var pause_menu_count := 0
+	for child in first_level.get_children():
+		if child is Control and child.has_method("_resume"):
+			pause_menu_count += 1
+	if pause_menu_count != 1:
+		_fail("repeated pause input should not create duplicate menus")
+		return
 	if pause_menu.process_mode != Node.PROCESS_MODE_ALWAYS:
 		_fail("the pause menu should process while gameplay is paused")
 		return
@@ -83,6 +91,22 @@ func run_checks() -> void:
 	if paused:
 		_fail("the pause action should resume gameplay from the pause menu")
 		return
+	controller.call("_unhandled_input", pause_event)
+	await process_frame
+	pause_menu = first_level.get_node_or_null("PauseMenu") as Control
+	var pause_buttons := pause_menu.find_children("*", "Button", true, false)
+	pause_buttons[2].emit_signal("pressed")
+	await create_timer(0.1).timeout
+	if current_scene.scene_file_path != "res://scenes/ui/title_screen.tscn" or paused:
+		_fail("Return to Title from pause should unpause and open the title screen")
+		return
+	title_buttons = current_scene.find_children("*", "Button", true, false)
+	title_buttons[0].emit_signal("pressed")
+	await create_timer(0.1).timeout
+	hub_buttons = current_scene.find_children("*", "Button", true, false)
+	hub_buttons[0].emit_signal("pressed")
+	await create_timer(0.1).timeout
+	first_level = current_scene
 	var first_exit: Area2D = first_level.find_child("LevelExit", true, false) as Area2D
 	first_exit.call("_on_body_entered", first_level.get_node("World/Wick"))
 	await create_timer(0.1).timeout
