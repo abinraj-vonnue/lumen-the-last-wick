@@ -1,7 +1,8 @@
-[gd_scene format=3 uid="uid://byypxax6d3781"]
+[gd_scene load_steps=5 format=3 uid="uid://byypxax6d3781"]
 
 [ext_resource type="Script" uid="uid://cofh2wdduan3l" path="res://scripts/player.gd" id="1_p4iec"]
 [ext_resource type="Texture2D" uid="uid://citmp0nseeyhs" path="res://assets/wick_light.png" id="2_tfd6i"]
+[ext_resource type="Script" path="res://scripts/wick_light.gd" id="3_wick_light"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_08j7w"]
 radius = 9.0
@@ -18,6 +19,7 @@ shape = SubResource("CapsuleShape2D_08j7w")
 position_smoothing_enabled = true
 
 [node name="WickLight" type="PointLight2D" parent="." unique_id=604801802]
+script = ExtResource("3_wick_light")
 color = Color(1, 0.81960785, 0.5411765, 1)
 energy = 1.28
 texture = ExtResource("2_tfd6i")
