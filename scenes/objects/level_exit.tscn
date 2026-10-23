@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://cbt6h1ehlevng"]
+
+[ext_resource type="Script" uid="uid://cuu3fxak2vjy1" path="res://scripts/level_exit.gd" id="1_jiolj"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_08j7w"]
+size = Vector2(48, 72)
+
+[node name="LevelExit" type="Area2D" unique_id=2050264204]
+script = ExtResource("1_jiolj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=507357397]
+shape = SubResource("RectangleShape2D_08j7w")
+
+[node name="Visual" type="Polygon2D" parent="." unique_id=1880087015]
+color = Color(0.46666667, 0.45490196, 0.72156864, 1)
+polygon = PackedVector2Array(-24, -36, 24, -36, 24, 36, -24, 36)
