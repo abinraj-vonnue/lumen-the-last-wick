@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/flare_gate.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="GateShape"]
-size = Vector2(28, 160)
+size = Vector2(28, 260)
 
 [node name="FlareGate" type="StaticBody2D"]
 script = ExtResource("1")
@@ -13,4 +13,4 @@ shape = SubResource("GateShape")
 
 [node name="Visual" type="Polygon2D" parent="."]
 color = Color(0.33, 0.58, 0.72, 0.95)
-polygon = PackedVector2Array(-14, -80, 14, -80, 14, 80, -14, 80)
+polygon = PackedVector2Array(-14, -130, 14, -130, 14, 130, -14, 130)

@@ -2,6 +2,8 @@ extends Node2D
 
 signal activated
 
+## This is a one-shot puzzle trigger: once a flare reaches it, it stays activated.
+
 @export var activation_distance: float = 360.0
 @export var requires_line_of_sight: bool = true
 

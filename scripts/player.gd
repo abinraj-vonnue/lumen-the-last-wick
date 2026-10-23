@@ -136,8 +136,9 @@ func _setup_input() -> void:
 	_add_key_action("move_left", [KEY_A, KEY_LEFT])
 	_add_key_action("move_right", [KEY_D, KEY_RIGHT])
 	_add_key_action("jump", [KEY_SPACE, KEY_W, KEY_UP])
-	_add_key_action("move_up", [KEY_W, KEY_UP])
-	_add_key_action("move_down", [KEY_S, KEY_DOWN])
+	# W and Up remain jump-only; I/K aim vertical dashes without changing jump behavior.
+	_add_key_action("move_up", [KEY_I])
+	_add_key_action("move_down", [KEY_K])
 	_add_key_action("dash", [KEY_SHIFT, KEY_X])
 	_add_key_action("flare", [KEY_E, KEY_F])
 	_add_key_action("restart", [KEY_R])
@@ -175,10 +176,14 @@ func _process_dash(delta: float) -> void:
 	_dash_timer -= delta
 	velocity = _dash_direction * dash_speed
 	move_and_slide()
-	var hit_wall := is_on_wall() or is_on_ceiling()
-	var hit_floor := _dash_direction.y > 0.2 and is_on_floor()
-	if hit_wall or hit_floor or _dash_timer <= 0.0:
-		_end_dash(hit_wall or hit_floor)
+	var blocked_in_dash_direction := false
+	for collision_index in get_slide_collision_count():
+		var collision := get_slide_collision(collision_index)
+		if _dash_direction.dot(collision.get_normal()) < -0.01:
+			blocked_in_dash_direction = true
+			break
+	if blocked_in_dash_direction or _dash_timer <= 0.0:
+		_end_dash(blocked_in_dash_direction)
 
 
 func _end_dash(collided: bool) -> void:

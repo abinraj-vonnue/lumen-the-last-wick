@@ -63,7 +63,7 @@ position = Vector2(830, 500)
 activation_distance = 420.0
 
 [node name="FlareGate" parent="World" instance=ExtResource("8_flare_gate")]
-position = Vector2(900, 532)
+position = Vector2(900, 450)
 
 [node name="LevelExit" parent="World" unique_id=2050264204 instance=ExtResource("3_fr1um")]
 position = Vector2(950, 520)
