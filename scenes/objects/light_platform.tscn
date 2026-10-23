@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://c1521hejctgp4"]
+
+[ext_resource type="Script" uid="uid://bb4ae680mul8d" path="res://scripts/light_platform.gd" id="1_qfsho"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hcsdw"]
+size = Vector2(180, 20)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_08j7w"]
+radius = 150.0
+
+[node name="LightPlatform" type="StaticBody2D" unique_id=1719528808]
+script = ExtResource("1_qfsho")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=400510823]
+shape = SubResource("RectangleShape2D_hcsdw")
+
+[node name="Visual" type="Polygon2D" parent="." unique_id=36330144]
+color = Color(0.46666667, 0.45490196, 0.72156864, 1)
+polygon = PackedVector2Array(-90, -10, 90, -10, 90, 10, -90, 10)
+
+[node name="DetectionArea" type="Area2D" parent="." unique_id=1575694314]
+
+[node name="DetectionShape" type="CollisionShape2D" parent="DetectionArea" unique_id=280913061]
+shape = SubResource("CircleShape2D_08j7w")
