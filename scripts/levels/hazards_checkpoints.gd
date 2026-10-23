@@ -4,6 +4,7 @@ extends "res://scripts/levels/playable_level.gd"
 func _ready() -> void:
 	stage_index = 1
 	stage_title = "A Safe Place"
+	stage_subtitle = "The Briar Courtyards — wayfarer shrines still hold back the creeping dark"
 	stage_hint = "Read the spike rhythm and touch each lamp to secure a return point."
 	super._ready()
 
@@ -16,3 +17,8 @@ func _build_stage() -> void:
 	_add_checkpoint(Vector2(1050.0, 578.0))
 	_add_hazard(Vector2(1190.0, 602.0), Vector2(80.0, 26.0))
 	_add_exit(Vector2(1345.0, 584.0))
+
+	# Decorative courtyard arches and weathered statues flanking the shrines
+	_add_broken_arch(Vector2(625.0, 620.0), 170.0, 150.0)
+	_add_broken_arch(Vector2(1050.0, 620.0), 170.0, 150.0)
+	_add_distant_monolith(Vector2(810.0, 620.0), 230.0, 46.0)
