@@ -142,6 +142,7 @@ func _setup_input() -> void:
 	_add_key_action("dash", [KEY_SHIFT, KEY_X])
 	_add_key_action("flare", [KEY_E, KEY_F])
 	_add_key_action("restart", [KEY_R])
+	_add_key_action("pause", [KEY_ESCAPE])
 
 
 func _add_key_action(action: StringName, keys: Array) -> void:

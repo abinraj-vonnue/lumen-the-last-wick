@@ -1,6 +1,7 @@
 extends Node2D
 
 @export var initial_spawn_position: Vector2 = Vector2(200.0, 560.0)
+@export var stage_index: int = -1
 
 var _player: CharacterBody2D
 var _completion_started: bool = false
@@ -39,3 +40,13 @@ func _on_level_completed() -> void:
 		return
 	_completion_started = true
 	_player.complete()
+	if stage_index >= 0:
+		GameFlow.complete_stage(stage_index)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause") and stage_index >= 0:
+		get_viewport().set_input_as_handled()
+		var pause_menu: Node = load("res://scenes/ui/pause_menu.tscn").instantiate()
+		get_tree().current_scene.add_child(pause_menu)
+		get_tree().paused = true

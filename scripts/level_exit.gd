@@ -16,11 +16,14 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if body.has_method("is_dying") and body.call("is_dying"):
 		return
+	var level := get_tree().current_scene
+	var is_flow_level: bool = level != null and level.has_method("uses_game_flow") and level.call("uses_game_flow")
 	_completed = true
 	if body.has_method("complete"):
 		body.call("complete")
 	completed.emit()
-	_show_completion_message()
+	if not is_flow_level:
+		_show_completion_message()
 
 
 func _show_completion_message() -> void:
