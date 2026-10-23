@@ -1,9 +1,11 @@
 extends Node2D
 
 @export var initial_spawn_position: Vector2 = Vector2(200.0, 560.0)
+@export var stage_index: int = -1
 
 var _player: CharacterBody2D
 var _completion_started: bool = false
+var _pause_menu_open: bool = false
 
 
 func _ready() -> void:
@@ -39,3 +41,23 @@ func _on_level_completed() -> void:
 		return
 	_completion_started = true
 	_player.complete()
+	if stage_index >= 0:
+		GameFlow.complete_stage(stage_index)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("pause") or stage_index < 0:
+		return
+	if _pause_menu_open or get_tree().paused:
+		return
+	get_viewport().set_input_as_handled()
+	var pause_menu: Node = load("res://scenes/ui/pause_menu.tscn").instantiate()
+	pause_menu.name = "PauseMenu"
+	pause_menu.tree_exited.connect(_on_pause_menu_closed, CONNECT_ONE_SHOT)
+	_pause_menu_open = true
+	get_tree().current_scene.add_child(pause_menu)
+	get_tree().paused = true
+
+
+func _on_pause_menu_closed() -> void:
+	_pause_menu_open = false

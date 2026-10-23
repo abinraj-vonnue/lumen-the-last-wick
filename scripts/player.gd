@@ -21,7 +21,7 @@ signal flare_started(origin: Vector2)
 
 @export_group("Dash")
 @export var dash_speed: float = 620.0
-@export var dash_duration: float = 0.18
+@export var dash_duration: float = 0.22
 @export var dash_cooldown: float = 0.45
 
 @export_group("Flare")
@@ -142,6 +142,7 @@ func _setup_input() -> void:
 	_add_key_action("dash", [KEY_SHIFT, KEY_X])
 	_add_key_action("flare", [KEY_E, KEY_F])
 	_add_key_action("restart", [KEY_R])
+	_add_key_action("pause", [KEY_ESCAPE])
 
 
 func _add_key_action(action: StringName, keys: Array) -> void:

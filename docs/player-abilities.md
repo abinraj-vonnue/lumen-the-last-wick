@@ -9,7 +9,7 @@
 
 `W` and Up remain jump-only. `I` and `K` provide vertical dash aim so a jump input cannot unintentionally turn a dash upward. Dash falls back to Wick's facing direction when no aim key is held.
 
-Dash lasts 0.18 seconds at 620 pixels per second and has a 0.45 second cooldown by default. It is available once per airborne turn, then refreshes on landing or checkpoint activation. A collision only ends it when Wick is moving into that collision surface; moving along a ceiling or floor does not cancel a horizontal dash.
+Dash lasts 0.22 seconds at 620 pixels per second and has a 0.45 second cooldown by default. It is available once per airborne turn, then refreshes on landing or checkpoint activation. A collision only ends it when Wick is moving into that collision surface; moving along a ceiling or floor does not cancel a horizontal dash.
 
 ## Flare puzzle rules
 
