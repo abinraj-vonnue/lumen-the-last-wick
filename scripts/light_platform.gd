@@ -41,7 +41,11 @@ func _physics_process(delta: float) -> void:
 
 	if is_instance_valid(_light_source):
 		var distance := _light_source.global_position.distance_to(_closest_platform_point())
+		var flare_bonus := 0.0
+		if _light_source.has_method("get_platform_range_bonus"):
+			flare_bonus = _light_source.call("get_platform_range_bonus")
 		var limit := deactivation_distance if _is_active else required_light_distance
+		limit += flare_bonus
 		if distance <= limit:
 			should_activate = _has_clear_line_of_sight(_light_source)
 
