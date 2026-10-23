@@ -32,14 +32,14 @@ func start_new_game() -> void:
 	get_tree().paused = false
 	unlocked_stage = 0
 	current_stage = -1
-	_transitioning = false
+	_transitioning = true
 	_change_scene(HUB_SCENE)
 
 
 func return_to_title() -> void:
 	get_tree().paused = false
 	current_stage = -1
-	_transitioning = false
+	_transitioning = true
 	_change_scene(TITLE_SCENE)
 
 
@@ -77,6 +77,10 @@ func complete_stage(stage_index: int) -> void:
 
 
 func _change_scene(scene_path: String) -> void:
+	call_deferred("_change_scene_now", scene_path)
+
+
+func _change_scene_now(scene_path: String) -> void:
 	var error := get_tree().change_scene_to_file(scene_path)
 	if error != OK:
 		_transitioning = false

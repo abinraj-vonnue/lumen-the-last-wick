@@ -22,4 +22,8 @@ Each stage has its own scene and layout script and uses the shared `playable_lev
 - `Shift` or `X`: dash; `I` / `K` aim vertical dashes; `E` / `F`: flare.
 - `Escape`: pause/resume during a challenge stage.
 
+Dash duration is tuned to 0.22 seconds so the dash stage is crossable with a jump and dash while remaining too wide for a jump alone.
+
 Run `godot --headless --path . --script res://tests/game_flow_smoke.gd` for title, progression, lock, reset, pause, restart, completion, and ending checks. Run `godot --headless --path . --script res://tests/ability_smoke.gd` for ability and puzzle regression checks.
+
+Run `godot --headless --path . --script res://tests/stage_mechanics_smoke.gd` to verify the dash-required gap, closed-gate bypass prevention, flare activation, and physical exit reachability in the flare puzzle and finale.

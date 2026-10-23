@@ -21,7 +21,7 @@ signal flare_started(origin: Vector2)
 
 @export_group("Dash")
 @export var dash_speed: float = 620.0
-@export var dash_duration: float = 0.18
+@export var dash_duration: float = 0.22
 @export var dash_cooldown: float = 0.45
 
 @export_group("Flare")
