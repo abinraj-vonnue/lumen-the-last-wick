@@ -27,6 +27,7 @@ func _connect_checkpoint(checkpoint: Node) -> void:
 
 func _on_checkpoint_activated(_checkpoint: Area2D, spawn_position: Vector2) -> void:
 	_player.set_respawn_position(spawn_position)
+	_player.refill_dash()
 
 
 func _on_player_died(player: CharacterBody2D) -> void:
