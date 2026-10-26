@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://d36ij2xkuqvad"]
 
-[ext_resource type="Script" path="res://scripts/levels/dash_traversal.gd" id="1"]
+[ext_resource type="Script" uid="uid://b4bbf1yicy3ui" path="res://scripts/levels/dash_traversal.gd" id="1"]
 
-[node name="DashTraversal" type="Node2D"]
+[node name="DashTraversal" type="Node2D" unique_id=1400441775]
 script = ExtResource("1")
