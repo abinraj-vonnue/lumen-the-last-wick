@@ -1,0 +1,54 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_exit_3d.gd" id="1_script"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_exit"]
+size = Vector3(0.72, 1.15, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_arch"]
+albedo_color = Color(0.24, 0.28, 0.42, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_veil"]
+resource_local_to_scene = true
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.74, 0.34, 0.32)
+emission_enabled = true
+emission = Color(0.95, 0.46, 0.12, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_arch_side"]
+size = Vector3(0.11, 1.1, 0.24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_arch_top"]
+size = Vector3(0.78, 0.12, 0.24)
+
+[sub_resource type="QuadMesh" id="QuadMesh_veil"]
+size = Vector2(0.54, 0.91)
+
+[node name="LevelExit3D" type="Area3D" groups=["level_exit"]]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_exit")
+
+[node name="ArchLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.34, 0.52, 0)
+mesh = SubResource("BoxMesh_arch_side")
+surface_material_override/0 = SubResource("StandardMaterial3D_arch")
+
+[node name="ArchRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.34, 0.52, 0)
+mesh = SubResource("BoxMesh_arch_side")
+surface_material_override/0 = SubResource("StandardMaterial3D_arch")
+
+[node name="ArchTop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.02, 0)
+mesh = SubResource("BoxMesh_arch_top")
+surface_material_override/0 = SubResource("StandardMaterial3D_arch")
+
+[node name="PortalVeil" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.52, -0.08)
+material_override = SubResource("StandardMaterial3D_veil")
+mesh = SubResource("QuadMesh_veil")
