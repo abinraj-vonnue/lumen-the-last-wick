@@ -1,6 +1,101 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bp1ust3pj42fn"]
 
-[ext_resource type="Script" path="res://scripts/levels/light_traversal.gd" id="1"]
+[ext_resource type="Script" uid="uid://biqtx7wspxnv" path="res://scripts/level_controller_3d.gd" id="1_controller"]
+[ext_resource type="PackedScene" path="res://scenes/player/wick_3d.tscn" id="2_wick"]
+[ext_resource type="PackedScene" path="res://scenes/objects/ground_segment_3d.tscn" id="3_ground"]
+[ext_resource type="PackedScene" path="res://scenes/objects/light_platform_3d.tscn" id="4_platform"]
+[ext_resource type="PackedScene" path="res://scenes/objects/level_exit_3d.tscn" id="5_exit"]
+[ext_resource type="Texture2D" uid="uid://crula4g2exgsf" path="res://background.png" id="6_background"]
+[ext_resource type="PackedScene" path="res://scenes/ui/stage_one_hud.tscn" id="9_hud"]
+[ext_resource type="Texture2D" path="res://assets/platform2/01_island_lantern_wide.png" id="10_platform_island"]
+[ext_resource type="Texture2D" path="res://assets/platform2/03_suspension_bridge.png" id="11_platform_bridge"]
+[ext_resource type="Texture2D" path="res://assets/platform2/11_fern_island_mid.png" id="12_platform_island_small"]
+[ext_resource type="Texture2D" uid="uid://jyis4wg3576e" path="res://fg_layer_grass_land.png" id="13_bottom_grass"]
 
-[node name="LightTraversal" type="Node2D"]
-script = ExtResource("1")
+[sub_resource type="Environment" id="Environment_night"]
+background_mode = 1
+background_color = Color(0.015, 0.02, 0.055, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.24, 0.3, 0.52, 1)
+ambient_light_energy = 0.45
+
+[node name="LightTraversal" type="Node3D" unique_id=116159281]
+script = ExtResource("1_controller")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=886608427]
+environment = SubResource("Environment_night")
+
+[node name="MoonFill" type="DirectionalLight3D" parent="." unique_id=604937115]
+transform = Transform3D(0.957439, 0.111808956, 0.26610032, -0.2227742, 0.8724544, 0.43496552, -0.18352735, -0.47573322, 0.86023, 0, 0, 0)
+light_color = Color(0.38, 0.48, 0.78, 1)
+light_energy = 0.62
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1939930783]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.6, 18)
+projection = 1
+current = true
+size = 7.2
+far = 100.0
+
+[node name="BackgroundLayer" type="Node3D" parent="." unique_id=2033060174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+
+[node name="Kingdom" type="Sprite3D" parent="BackgroundLayer" unique_id=1225730237]
+transform = Transform3D(1.5550026, 0, 0, 0, 1.1560018, 0, 0, 0, 1, 1.8768892, 1.1276445, 0)
+modulate = Color(0.72, 0.78, 0.9, 1)
+texture = ExtResource("6_background")
+
+[node name="Gameplay" type="Node3D" parent="." unique_id=851550600]
+
+[node name="GroundStart" parent="Gameplay" unique_id=1573502247 instance=ExtResource("3_ground")]
+transform = Transform3D(2.1475894, 0, 0, 0, 2.0974178, 0, 0, 0, 1, -1.5909882, -0.6956435, 0)
+
+[node name="GroundFinish" parent="Gameplay" unique_id=2071164512 instance=ExtResource("3_ground")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.6, -0.3, 0)
+dimensions = Vector3(6.05, 0.6, 1.2)
+
+[node name="Wick3D" parent="Gameplay" unique_id=1576456725 instance=ExtResource("2_wick")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.264015, 0.2, 0)
+
+[node name="LightPlatformOne" parent="Gameplay" unique_id=1962054530 instance=ExtResource("4_platform")]
+transform = Transform3D(1.5934664, 0, 0, 0, 1.5160587, 0, 0, 0, 1, 4.9241595, 0.74009967, 0)
+light_source_path = NodePath("../Wick3D/WickLight")
+art_texture = ExtResource("10_platform_island")
+art_surface_ratio = 0.25
+art_vertical_scale = 0.53
+platform_width = 3.3
+rise_height = 0.13
+rise_speed = 0.48
+
+[node name="LightPlatformTwo" parent="Gameplay" unique_id=1733450995 instance=ExtResource("4_platform")]
+transform = Transform3D(1.636805, 0, 0, 0, 1.7070935, 0, 0, 0, 1, 8.773869, 1.9905012, 0)
+light_source_path = NodePath("../Wick3D/WickLight")
+art_texture = ExtResource("11_platform_bridge")
+art_surface_ratio = 0.35
+art_vertical_scale = 0.76
+platform_width = 3.8
+rise_height = 0.16
+rise_speed = 0.42
+
+[node name="LightPlatformThree" parent="Gameplay" unique_id=19314314 instance=ExtResource("4_platform")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.2, 1, 0)
+light_source_path = NodePath("../Wick3D/WickLight")
+art_texture = ExtResource("12_platform_island_small")
+art_surface_ratio = 0.12
+art_vertical_scale = 0.55
+platform_width = 3.2
+rise_speed = 0.52
+
+[node name="LevelExit" parent="Gameplay" unique_id=1874340627 instance=ExtResource("5_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.4, 0.58, 0)
+
+[node name="BottomGrassLayer" type="Node3D" parent="." unique_id=223406182]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, -0.865, 2)
+
+[node name="GrassShadow" type="Sprite3D" parent="BottomGrassLayer" unique_id=341285783]
+transform = Transform3D(0.7958862, 0, 0, 0, 0.63834345, 0, 0, 0, 0.88318586, -0.86684227, 0.15075493, 0)
+modulate = Color(0.08, 0.12, 0.18, 0.78)
+texture = ExtResource("13_bottom_grass")
+
+[node name="StageHUD" parent="." unique_id=1785232114 instance=ExtResource("9_hud")]
