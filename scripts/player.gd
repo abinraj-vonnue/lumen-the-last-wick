@@ -4,8 +4,18 @@ signal died(player: CharacterBody2D)
 signal respawned(player: CharacterBody2D)
 signal flare_started(origin: Vector2)
 
-# Temporary movement prototype.
-# The placeholder appearance will be replaced with illustrated art later.
+const IDLE_SPRITE_SCALE := Vector2(0.35, 0.35)
+const IDLE_SPRITE_X := 0.0
+const IDLE_SPRITE_Y := -46.05
+const DEFAULT_SPRITE_X := -1.0
+const RUN_SPRITE_SCALE := Vector2(0.388, 0.388)
+const RUN_SPRITE_Y := -45.15
+const JUMP_SPRITE_SCALE := Vector2(0.35, 0.35)
+const JUMP_SPRITE_Y := -45.15
+const DASH_SPRITE_SCALE := Vector2(0.403, 0.403)
+const DASH_SPRITE_Y := -52.5
+
+# Character appearance is provided by the AnimatedSprite2D in wick.tscn.
 
 @export_group("Movement")
 @export var move_speed: float = 260.0
@@ -14,14 +24,17 @@ signal flare_started(origin: Vector2)
 
 @export_group("Jump")
 @export var gravity: float = 1600.0
-@export var jump_velocity: float = -600.0
+@export var jump_velocity: float = -680.0
 @export var fall_gravity_multiplier: float = 1.35
 @export var coyote_time: float = 0.10
 @export var jump_buffer_time: float = 0.12
 
+@export_group("Fall")
+@export var fall_death_distance: float = 240.0
+
 @export_group("Dash")
-@export var dash_speed: float = 620.0
-@export var dash_duration: float = 0.22
+@export var dash_speed: float = 680.0
+@export var dash_duration: float = 0.24
 @export var dash_cooldown: float = 0.45
 
 @export_group("Flare")
@@ -41,15 +54,17 @@ var _is_dashing: bool = false
 var _is_dying: bool = false
 var _is_complete: bool = false
 var _respawn_position: Vector2
+var _camera_anchor_y: float
 var _saved_collision_layer: int
 var _saved_collision_mask: int
 var _respawn_protection_timer: float = 0.0
-var _anim_time: float = 0.0
-var _run_cycle: float = 0.0
 var _step_timer: float = 0.0
 var _was_on_floor: bool = false
+var _was_airborne: bool = false
 var _dash_trail_points: Array[Vector2] = []
 var _flare_wave_progress: float = 1.0
+
+@onready var _wick_sprite: AnimatedSprite2D = $Visual
 
 
 func _ready() -> void:
@@ -58,9 +73,15 @@ func _ready() -> void:
 	_saved_collision_layer = collision_layer
 	_saved_collision_mask = collision_mask
 	_setup_input()
+	_wick_sprite.play("idle")
 
 	var camera := get_node_or_null("Camera2D") as Camera2D
 	if camera:
+		# Keep jumps from panning the view vertically. This keeps the foreground
+		# terrain aligned with its world-space collision and avoids exposing its edge.
+		_camera_anchor_y = global_position.y
+		camera.top_level = true
+		camera.global_position = global_position
 		camera.make_current()
 		camera.position_smoothing_enabled = true
 		camera.position_smoothing_speed = 7.0
@@ -68,11 +89,16 @@ func _ready() -> void:
 	queue_redraw()
 
 
+func _process(_delta: float) -> void:
+	var camera := get_node_or_null("Camera2D") as Camera2D
+	if camera and camera.top_level:
+		camera.global_position = Vector2(global_position.x, _camera_anchor_y)
+
+
 func _physics_process(delta: float) -> void:
 	if _is_dying or _is_complete:
 		queue_redraw()
 		return
-	_anim_time += delta
 	if _flare_wave_progress < 1.0:
 		_flare_wave_progress = minf(_flare_wave_progress + delta / maxf(flare_duration, 0.01), 1.0)
 	_respawn_protection_timer = maxf(_respawn_protection_timer - delta, 0.0)
@@ -91,6 +117,19 @@ func _physics_process(delta: float) -> void:
 		_try_dash()
 	if _is_dashing:
 		_process_dash(delta)
+		if _check_fall_death():
+			queue_redraw()
+			return
+		_wick_sprite.scale = DASH_SPRITE_SCALE
+		_wick_sprite.position.x = DEFAULT_SPRITE_X
+		_wick_sprite.position.y = DASH_SPRITE_Y
+		_wick_sprite.flip_h = _facing < 0.0
+		if _wick_sprite.animation != &"dash":
+			var dash_frames := _wick_sprite.sprite_frames
+			dash_frames.set_animation_speed(&"dash", dash_frames.get_frame_count(&"dash") / maxf(dash_duration, 0.01))
+			_wick_sprite.play(&"dash")
+		if not is_on_floor():
+			_was_airborne = true
 		_dash_trail_points.push_front(global_position)
 		if _dash_trail_points.size() > 7:
 			_dash_trail_points.pop_back()
@@ -129,17 +168,20 @@ func _physics_process(delta: float) -> void:
 
 	# Releasing jump early produces a shorter jump.
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
-		velocity.y *= 0.45
+		velocity.y *= 0.55
 
 	move_and_slide()
+	if _check_fall_death():
+		queue_redraw()
+		return
 
 	var on_floor_now := is_on_floor()
+	_update_locomotion_animation(on_floor_now)
 	if on_floor_now and not _was_on_floor:
 		_play_audio("land")
 	_was_on_floor = on_floor_now
 
 	if on_floor_now and absf(velocity.x) > 22.0:
-		_run_cycle += delta * (absf(velocity.x) / move_speed) * 11.5
 		_step_timer -= delta
 		if _step_timer <= 0.0:
 			_step_timer = 0.28
@@ -149,6 +191,48 @@ func _physics_process(delta: float) -> void:
 	if not _dash_trail_points.is_empty():
 		_dash_trail_points.pop_back()
 	queue_redraw()
+
+
+func _update_locomotion_animation(on_floor_now: bool) -> void:
+	_wick_sprite.flip_h = _facing < 0.0
+	if _is_dashing:
+		return
+	if not on_floor_now:
+		_was_airborne = true
+		_wick_sprite.scale = JUMP_SPRITE_SCALE
+		_wick_sprite.position.x = DEFAULT_SPRITE_X
+		_wick_sprite.position.y = JUMP_SPRITE_Y
+		var air_animation: StringName = &"jump" if velocity.y < 0.0 else &"fall"
+		if _wick_sprite.animation != air_animation:
+			_wick_sprite.play(air_animation)
+		return
+	if _was_airborne:
+		_was_airborne = false
+		_wick_sprite.play("land")
+		return
+	if _wick_sprite.animation == &"land" and _wick_sprite.is_playing():
+		return
+	var target_animation: StringName = &"run" if absf(velocity.x) > 1.0 else &"idle"
+	var target_scale := RUN_SPRITE_SCALE if target_animation == &"run" else IDLE_SPRITE_SCALE
+	var target_x := DEFAULT_SPRITE_X if target_animation == &"run" else IDLE_SPRITE_X * _facing
+	var target_y := RUN_SPRITE_Y if target_animation == &"run" else IDLE_SPRITE_Y
+	if _wick_sprite.scale != target_scale:
+		_wick_sprite.scale = target_scale
+	if not is_equal_approx(_wick_sprite.position.x, target_x):
+		_wick_sprite.position.x = target_x
+	if not is_equal_approx(_wick_sprite.position.y, target_y):
+		_wick_sprite.position.y = target_y
+	if _wick_sprite.animation != target_animation:
+		_wick_sprite.play(target_animation)
+	elif target_animation in [&"idle", &"run"] and not _wick_sprite.is_playing():
+		_wick_sprite.play(target_animation)
+
+
+func _check_fall_death() -> bool:
+	if is_on_floor() or global_position.y < _respawn_position.y + fall_death_distance:
+		return false
+	request_death()
+	return true
 
 
 func _update_jump_timers(delta: float) -> void:
@@ -186,8 +270,8 @@ func _add_key_action(action: StringName, keys: Array) -> void:
 			InputMap.action_add_event(action, event)
 
 
-func set_respawn_position(position: Vector2) -> void:
-	_respawn_position = position
+func set_respawn_position(respawn_location: Vector2) -> void:
+	_respawn_position = respawn_location
 
 
 func _try_dash() -> void:
@@ -197,6 +281,8 @@ func _try_dash() -> void:
 	if direction.is_zero_approx():
 		direction = Vector2(_facing, 0.0)
 	_dash_direction = direction.normalized()
+	if absf(_dash_direction.x) > 0.01:
+		_facing = signf(_dash_direction.x)
 	_dash_available = false
 	_dash_cooldown_timer = dash_cooldown
 	_dash_timer = dash_duration
@@ -297,6 +383,7 @@ func respawn_at() -> void:
 	velocity = Vector2.ZERO
 	_reset_abilities()
 	_respawn_protection_timer = 0.25
+	_was_airborne = false
 	collision_layer = _saved_collision_layer
 	collision_mask = _saved_collision_mask
 	visible = true
@@ -323,16 +410,7 @@ func _play_audio(event_name: String, volume_scale: float = 1.0) -> void:
 
 
 func _draw() -> void:
-	var speed_ratio := clampf(absf(velocity.x) / maxf(move_speed, 1.0), 0.0, 1.0)
-	var is_airborne := not is_on_floor()
-	var breathe := sin(_anim_time * 3.4) * 1.1
-	var stride := sin(_run_cycle) * speed_ratio
-	var bob := absf(cos(_run_cycle)) * 2.2 * speed_ratio if not is_airborne else 0.0
-	var tilt := _facing * speed_ratio * 2.5
-	if is_airborne:
-		tilt = _facing * clampf(-velocity.y * 0.005, -2.5, 3.0)
-
-	# 1. Flare expanding solar resonance rings
+	# Flare expanding solar resonance rings.
 	if _flare_timer > 0.0 or _flare_wave_progress < 1.0:
 		var wave_t := clampf(_flare_wave_progress, 0.0, 1.0)
 		var outer_r := lerpf(18.0, 155.0, 1.0 - pow(1.0 - wave_t, 2.2))
@@ -341,7 +419,7 @@ func _draw() -> void:
 		draw_arc(Vector2(0, -2), outer_r, 0.0, TAU, 48, Color(1.0, 0.84, 0.44, alpha), 3.0, true)
 		draw_arc(Vector2(0, -2), inner_r, 0.0, TAU, 36, Color(1.0, 0.95, 0.75, alpha * 0.8), 1.8, true)
 
-	# 2. Dash luminous afterimage trail
+	# Dash luminous afterimage trail.
 	if _dash_trail_points.size() > 1:
 		for idx in range(1, _dash_trail_points.size()):
 			var local_pt := to_local(_dash_trail_points[idx])
@@ -356,96 +434,5 @@ func _draw() -> void:
 			true
 		)
 
-	# 3. Soft warm ground pool / shadow beneath Wick
+	# Soft warm ground pool beneath Wick.
 	draw_circle(Vector2(0, 12), 7.5, Color(1.0, 0.78, 0.38, 0.16))
-
-	# 4. Striding feet silhouettes
-	var left_foot := Vector2(-3.5 + stride * 4.5, 13.0 - maxf(0.0, stride) * 2.5)
-	var right_foot := Vector2(3.5 - stride * 4.5, 13.0 - maxf(0.0, -stride) * 2.5)
-	if is_airborne:
-		left_foot = Vector2(-3.5, 12.0 + clampf(velocity.y * 0.004, -2.0, 2.5))
-		right_foot = Vector2(3.0, 13.5 + clampf(velocity.y * 0.004, -2.0, 2.5))
-	draw_circle(left_foot, 2.4, Color("#1c2038"))
-	draw_circle(right_foot, 2.4, Color("#1c2038"))
-
-	# 5. Fluttering twilight scarf tail trailing behind Wick
-	var scarf_wave := sin(_anim_time * 7.5 - speed_ratio * 2.0) * (2.5 + speed_ratio * 3.5)
-	var scarf_lift := clampf(velocity.y * 0.015, -6.0, 8.0) if is_airborne else 0.0
-	var scarf_poly := PackedVector2Array([
-		Vector2(-_facing * 2.0, -2.0 - bob),
-		Vector2(-_facing * (11.0 + speed_ratio * 6.0), -1.0 + scarf_wave * 0.5 + scarf_lift),
-		Vector2(-_facing * (16.0 + speed_ratio * 8.0), 3.5 + scarf_wave + scarf_lift),
-		Vector2(-_facing * 8.0, 5.0 - bob),
-	])
-	draw_colored_polygon(scarf_poly, Color("#b86b35"))
-
-	# 6. Layered traveler cloak silhouette (midnight indigo outer + warm rim)
-	var cloak_billow := 2.0 + speed_ratio * 2.5 + (2.5 if (is_airborne and velocity.y > 0.0) else 0.0)
-	var cloak_outer := PackedVector2Array([
-		Vector2(tilt * 0.4, -10.0 - bob + breathe * 0.4),
-		Vector2(7.5 + cloak_billow * 0.4, -1.0 - bob),
-		Vector2(9.5 + cloak_billow, 10.5 - bob * 0.5),
-		Vector2(3.0, 12.0 - bob * 0.3),
-		Vector2(-2.5, 11.0 - bob * 0.3),
-		Vector2(-9.5 - cloak_billow, 10.5 - bob * 0.5),
-		Vector2(-7.5 - cloak_billow * 0.4, -1.0 - bob),
-	])
-	draw_colored_polygon(cloak_outer, Color("#252c4a"))
-
-	var cloak_inner := PackedVector2Array([
-		Vector2(tilt * 0.4, -9.0 - bob + breathe * 0.4),
-		Vector2(5.5, 0.0 - bob),
-		Vector2(6.5, 9.5 - bob * 0.4),
-		Vector2(0.0, 10.8 - bob * 0.3),
-		Vector2(-6.5, 9.5 - bob * 0.4),
-		Vector2(-5.5, 0.0 - bob),
-	])
-	draw_colored_polygon(cloak_inner, Color("#3a456e"))
-
-	# 7. Head & pointed lantern-keeper hood with living flame crest
-	var head_center := Vector2(tilt * 0.35, -3.5 - bob + breathe * 0.5)
-	draw_circle(head_center, 6.8, Color("#181b2e"))
-
-	var hood_tip := Vector2(
-		head_center.x - _facing * (2.5 + speed_ratio * 2.5) + sin(_anim_time * 5.0) * 0.8,
-		head_center.y - 12.5 + breathe * 0.6
-	)
-	draw_colored_polygon(
-		PackedVector2Array([
-			head_center + Vector2(-6.5, -1.5),
-			hood_tip,
-			head_center + Vector2(6.5, -1.5),
-		]),
-		Color("#343f66")
-	)
-
-	# Warm golden wick-flame crest atop the hood
-	var wick_flicker := sin(_anim_time * 11.0) * 1.2
-	var flame_scale := 1.45 if _flare_timer > 0.0 else 1.0
-	draw_colored_polygon(
-		PackedVector2Array([
-			hood_tip + Vector2(-3.2 * flame_scale, 2.0),
-			hood_tip + Vector2(wick_flicker, -7.5 * flame_scale),
-			hood_tip + Vector2(3.2 * flame_scale, 2.0),
-		]),
-		Color(1.0, 0.72, 0.28, 0.95)
-	)
-	draw_circle(hood_tip + Vector2(wick_flicker * 0.4, -2.2), 2.1 * flame_scale, Color(1.0, 0.96, 0.78))
-
-	# 8. Luminous eyes looking in facing direction
-	var eye_offset := Vector2(_facing * 2.2, -0.5)
-	draw_circle(head_center + eye_offset + Vector2(-1.6, 0.0), 1.35, Color(1.0, 0.94, 0.76))
-	draw_circle(head_center + eye_offset + Vector2(1.8, 0.0), 1.35, Color(1.0, 0.94, 0.76))
-
-	# 9. Handheld brass lantern suspended in front of Wick
-	var swing_angle := sin(_run_cycle) * 0.25 * speed_ratio + sin(_anim_time * 2.8) * 0.06
-	var hand_pos := Vector2(_facing * 7.5 + tilt * 0.3, 1.5 - bob)
-	var lantern_pos := hand_pos + Vector2(sin(swing_angle) * 5.0, 5.5)
-	draw_line(hand_pos, lantern_pos + Vector2(0, -3.5), Color("#d9a75a"), 1.4, true)
-	# Lantern outer warm halo
-	var halo_r := 13.5 if _flare_timer <= 0.0 else 22.0
-	draw_circle(lantern_pos, halo_r, Color(1.0, 0.80, 0.38, 0.22))
-	# Lantern cage & glowing core
-	draw_circle(lantern_pos, 3.8, Color("#2b2333"))
-	draw_circle(lantern_pos, 2.6, Color(1.0, 0.86, 0.48))
-	draw_circle(lantern_pos, 1.4, Color(1.0, 0.98, 0.88))
