@@ -14,9 +14,7 @@ script = ExtResource("1_qfsho")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=400510823]
 shape = SubResource("RectangleShape2D_hcsdw")
 
-[node name="Visual" type="Polygon2D" parent="." unique_id=36330144]
-color = Color(0.46666667, 0.45490196, 0.72156864, 1)
-polygon = PackedVector2Array(-90, -10, 90, -10, 90, 10, -90, 10)
+[node name="Visual" type="Node2D" parent="." unique_id=36330144]
 
 [node name="DetectionArea" type="Area2D" parent="." unique_id=1575694314]
 

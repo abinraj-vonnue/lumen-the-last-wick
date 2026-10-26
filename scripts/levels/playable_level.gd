@@ -9,6 +9,15 @@ const EXIT_SCENE := preload("res://scenes/objects/level_exit.tscn")
 const SWITCH_SCENE := preload("res://scenes/objects/flare_switch.tscn")
 const GATE_SCENE := preload("res://scenes/objects/flare_gate.tscn")
 const LEVEL_CONTROLLER_SCRIPT := preload("res://scripts/level_controller.gd")
+const FORGOTTEN_KINGDOM_TEXTURE := preload("res://assets/backgrounds/forgotten_kingdom.png")
+const LEVEL_ONE_FOREGROUND_TEXTURE := preload("res://forground_layer_source.png")
+const STONE_FACE_TEXTURE := preload("res://assets/platforms/stone_face_overlay.png")
+const TERRAIN_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/platforms/terrain_short.png"),
+	preload("res://assets/platforms/terrain_medium.png"),
+	preload("res://assets/platforms/terrain_midlong.png"),
+	preload("res://assets/platforms/terrain_long.png"),
+]
 
 @export var stage_index: int = 0
 @export var stage_title: String = "First Light"
@@ -18,7 +27,6 @@ const LEVEL_CONTROLLER_SCRIPT := preload("res://scripts/level_controller.gd")
 var _world: Node2D
 var _scenery_back: Node2D
 var _scenery_mid: Node2D
-var _scenery_fore: Node2D
 var _spawn_position := Vector2(150.0, 560.0)
 
 
@@ -26,7 +34,6 @@ func _ready() -> void:
 	var audio := get_node_or_null("/root/AudioDirector")
 	if audio != null and audio.has_method("set_stage_mood"):
 		audio.call("set_stage_mood", stage_index, false)
-	_build_backdrop()
 	_world = Node2D.new()
 	_world.name = "World"
 	add_child(_world)
@@ -34,6 +41,7 @@ func _ready() -> void:
 	wick.name = "Wick"
 	wick.position = _spawn_position
 	_world.add_child(wick)
+	_build_backdrop()
 
 	_scenery_back = Node2D.new()
 	_scenery_back.name = "SceneryBack"
@@ -46,7 +54,7 @@ func _ready() -> void:
 	_world.add_child(_scenery_mid)
 
 	_build_stage()
-	_build_foreground_silhouettes()
+	_build_foreground()
 	_add_level_controller()
 	_add_hud()
 
@@ -60,90 +68,21 @@ func uses_game_flow() -> bool:
 
 
 func _build_backdrop() -> void:
-	# Deep sky base
-	var backdrop := Polygon2D.new()
-	backdrop.name = "Backdrop"
-	backdrop.color = Color("#0b0e1f")
-	backdrop.polygon = PackedVector2Array([
-		Vector2(-3000, -1500), Vector2(5000, -1500),
-		Vector2(5000, 2200), Vector2(-3000, 2200),
-	])
-	backdrop.z_index = -100
-	add_child(backdrop)
+	# Keep the full-screen artwork aligned to the viewport while the camera moves in the world.
+	var kingdom_layer := CanvasLayer.new()
+	kingdom_layer.name = "ForgottenKingdomBackground"
+	kingdom_layer.layer = -2
+	add_child(kingdom_layer)
 
-	# Upper twilight indigo band
-	var upper_sky := Polygon2D.new()
-	upper_sky.name = "UpperSkyBand"
-	upper_sky.color = Color(0.08, 0.10, 0.22, 0.65)
-	upper_sky.polygon = PackedVector2Array([
-		Vector2(-3000, -1500), Vector2(5000, -1500),
-		Vector2(5000, 260), Vector2(-3000, 260),
-	])
-	upper_sky.z_index = -98
-	add_child(upper_sky)
-
-	# Horizon violet glow band (warmer in later stages)
-	var warmth := float(stage_index) * 0.035
-	var horizon_glow := Polygon2D.new()
-	horizon_glow.name = "HorizonGlow"
-	horizon_glow.color = Color(0.18 + warmth, 0.14 + warmth * 0.6, 0.32, 0.45)
-	horizon_glow.polygon = PackedVector2Array([
-		Vector2(-3000, 180), Vector2(5000, 180),
-		Vector2(5000, 680), Vector2(-3000, 680),
-	])
-	horizon_glow.z_index = -96
-	add_child(horizon_glow)
-
-	# Distant mountain range and ancient citadel silhouettes
-	var far_range := Polygon2D.new()
-	far_range.name = "FarMountainRange"
-	far_range.color = Color("#121730")
-	far_range.z_index = -90
-	far_range.polygon = PackedVector2Array([
-		Vector2(-1200, 900),
-		Vector2(-1200, 420), Vector2(-750, 290), Vector2(-380, 390),
-		Vector2(-60, 240), Vector2(210, 350), Vector2(490, 210),
-		Vector2(780, 330), Vector2(1090, 195), Vector2(1380, 310),
-		Vector2(1690, 225), Vector2(2050, 360), Vector2(2400, 280),
-		Vector2(2800, 430), Vector2(2800, 900),
-	])
-	add_child(far_range)
-
-	# Mid-distance sunken aqueduct & spire silhouettes
-	var mid_ruins := Polygon2D.new()
-	mid_ruins.name = "MidRuinSilhouettes"
-	mid_ruins.color = Color("#171d38")
-	mid_ruins.z_index = -82
-	mid_ruins.polygon = PackedVector2Array([
-		Vector2(-800, 900),
-		Vector2(-800, 490), Vector2(-420, 470), Vector2(-410, 320),
-		Vector2(-370, 310), Vector2(-360, 465), Vector2(-40, 480),
-		Vector2(120, 440), Vector2(130, 290), Vector2(165, 275),
-		Vector2(175, 440), Vector2(520, 465), Vector2(730, 430),
-		Vector2(745, 260), Vector2(785, 250), Vector2(795, 430),
-		Vector2(1150, 455), Vector2(1340, 420), Vector2(1355, 230),
-		Vector2(1405, 215), Vector2(1420, 420), Vector2(1850, 470),
-		Vector2(2200, 490), Vector2(2200, 900),
-	])
-	add_child(mid_ruins)
-
-	# Atmospheric drifting mist ribbons
-	for mist_idx in 3:
-		var mist := Polygon2D.new()
-		mist.name = "MistRibbon_%d" % mist_idx
-		var y_base := 460.0 + float(mist_idx) * 75.0
-		mist.color = Color(0.32, 0.38, 0.58, 0.08 + float(mist_idx) * 0.02)
-		mist.z_index = -75 + mist_idx * 5
-		mist.polygon = PackedVector2Array([
-			Vector2(-900, y_base),
-			Vector2(-200, y_base - 18.0),
-			Vector2(500, y_base + 14.0),
-			Vector2(1200, y_base - 12.0),
-			Vector2(2100, y_base + 8.0),
-			Vector2(2100, y_base + 55.0),
-			Vector2(-900, y_base + 55.0),
-		])
-		add_child(mist)
+	var kingdom_artwork := TextureRect.new()
+	kingdom_artwork.name = "KingdomArtwork"
+	kingdom_artwork.texture = FORGOTTEN_KINGDOM_TEXTURE
+	kingdom_artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	kingdom_artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	kingdom_artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	kingdom_artwork.modulate = Color("#69708f")
+	kingdom_artwork.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	kingdom_layer.add_child(kingdom_artwork)
 
 	# Ambient floating dust motes across the stage
 	var dust := CPUParticles2D.new()
@@ -171,24 +110,58 @@ func _build_backdrop() -> void:
 	add_child(darkness)
 
 
-func _build_foreground_silhouettes() -> void:
-	_scenery_fore = Node2D.new()
-	_scenery_fore.name = "SceneryFore"
-	_scenery_fore.z_index = 20
-	_world.add_child(_scenery_fore)
+func _build_foreground() -> void:
+	# The authored frame is intentionally limited to First Light so its dark
+	# foliage adds depth without cluttering the later, more demanding stages.
+	if stage_index != 0:
+		return
 
-	# Lower abyssal foreground silhouettes below the camera floor for depth framing
-	for fg_idx in 5:
-		var x_pos := -100.0 + float(fg_idx) * 420.0
-		var spire := Polygon2D.new()
-		spire.color = Color(0.04, 0.05, 0.11, 0.88)
-		spire.polygon = PackedVector2Array([
-			Vector2(x_pos - 70.0, 760.0),
-			Vector2(x_pos - 25.0, 665.0 + float(fg_idx % 2) * 18.0),
-			Vector2(x_pos + 15.0, 680.0),
-			Vector2(x_pos + 65.0, 760.0),
-		])
-		_scenery_fore.add_child(spire)
+	var foreground_artwork := Sprite2D.new()
+	foreground_artwork.name = "ForegroundFrame"
+	foreground_artwork.texture = LEVEL_ONE_FOREGROUND_TEXTURE
+	# Center the 2172 px frame on the level, and lift its stone lip to the
+	# playable floor height. It is world-space artwork so camera motion stays aligned.
+	foreground_artwork.position = Vector2(715.0, _spawn_position.y + 5.0)
+	foreground_artwork.z_index = 20
+	# Cool, low-opacity tint keeps the source's warm lantern highlights from
+	# competing with Wick and the light platforms.
+	foreground_artwork.modulate = Color(0.48, 0.56, 0.72, 0.68)
+	_world.add_child(foreground_artwork)
+
+	# Make only the bottom stone contour solid. The foliage and hanging vines
+	# remain decorative and do not trap or block Wick.
+	var foreground_ground := StaticBody2D.new()
+	foreground_ground.name = "ForegroundSlopeCollision"
+	foreground_ground.position = foreground_artwork.position
+	foreground_ground.collision_layer = 1
+	foreground_ground.collision_mask = 1
+	var slope_collision := CollisionPolygon2D.new()
+	slope_collision.name = "WalkableStoneContour"
+	slope_collision.build_mode = CollisionPolygon2D.BUILD_SOLIDS
+	var image_size := LEVEL_ONE_FOREGROUND_TEXTURE.get_size()
+	var walkable_top := PackedVector2Array([
+		Vector2(250.0, 475.0),
+		Vector2(350.0, 485.0),
+		Vector2(470.0, 525.0),
+		Vector2(650.0, 535.0),
+		Vector2(800.0, 558.0),
+		Vector2(1000.0, 590.0),
+		Vector2(1200.0, 615.0),
+		Vector2(1400.0, 615.0),
+		Vector2(1550.0, 590.0),
+		Vector2(1700.0, 560.0),
+		Vector2(1850.0, 525.0),
+		Vector2(1950.0, 480.0),
+		Vector2(2070.0, 455.0),
+	])
+	var slope_polygon := PackedVector2Array()
+	for point in walkable_top:
+		slope_polygon.append(point - image_size * 0.5)
+	slope_polygon.append(Vector2(image_size.x * 0.5, image_size.y * 0.5))
+	slope_polygon.append(Vector2(-image_size.x * 0.5, image_size.y * 0.5))
+	slope_collision.polygon = slope_polygon
+	foreground_ground.add_child(slope_collision)
+	_world.add_child(foreground_ground)
 
 
 func _add_level_controller() -> void:
@@ -203,6 +176,7 @@ func _add_level_controller() -> void:
 func _add_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "StageHUD"
+	layer.layer = 2
 	add_child(layer)
 
 	var banner := Polygon2D.new()
@@ -246,72 +220,56 @@ func _add_ground(from_x: float, to_x: float, floor_y: float = 620.0) -> void:
 	collision.shape = rectangle
 	body.add_child(collision)
 
-	var half_w := width * 0.5
-	var segs := maxi(4, int(round(width / 90.0)))
-	var step := width / float(segs)
+	# Use the closest source ledge size to keep the illustrated terrain close to
+	# its authored proportions. Very wide floors use two mirrored sections.
+	var terrain_texture := _closest_terrain_texture(width)
+	var section_count := 2 if width >= 1200.0 else 1
+	var section_width := width / float(section_count)
+	for section_index in range(section_count):
+		var stone_face := Sprite2D.new()
+		stone_face.name = "StoneFace%d" % section_index
+		stone_face.texture = STONE_FACE_TEXTURE
+		stone_face.centered = false
+		stone_face.position = Vector2(-width * 0.5 + section_width * section_index, -40.0)
+		var face_scale := section_width / STONE_FACE_TEXTURE.get_width()
+		stone_face.scale = Vector2(face_scale, face_scale * 0.36)
+		body.add_child(stone_face)
 
-	# Deep cliff under-hang silhouette extending into the abyss (purely decorative)
-	var abyss_skirt := Polygon2D.new()
-	abyss_skirt.name = "CliffUnderhang"
-	abyss_skirt.color = Color("#14182b")
-	var skirt_pts := PackedVector2Array()
-	skirt_pts.append(Vector2(-half_w, -36.0))
-	skirt_pts.append(Vector2(half_w, -36.0))
-	for i in range(segs, -1, -1):
-		var rx := -half_w + float(i) * step
-		var depth := 125.0 + sin(float(i) * 1.9 + from_x * 0.02) * 28.0
-		if i == 0 or i == segs:
-			depth = 68.0
-		skirt_pts.append(Vector2(rx, depth))
-	abyss_skirt.polygon = skirt_pts
-	body.add_child(abyss_skirt)
-
-	# Main carved rock mass
-	var visual := Polygon2D.new()
-	visual.name = "Visual"
-	visual.color = Color("#282e45")
-	var rock_pts := PackedVector2Array()
-	for i in range(segs + 1):
-		var tx := -half_w + float(i) * step
-		var ty := -40.0 + sin(float(i) * 2.1) * 1.5
-		if i == 0 or i == segs:
-			ty = -40.0
-		rock_pts.append(Vector2(tx, ty))
-	for i in range(segs, -1, -1):
-		var bx := -half_w + float(i) * step
-		var by := 46.0 + cos(float(i) * 1.7 + 0.5) * 12.0
-		rock_pts.append(Vector2(bx, by))
-	visual.polygon = rock_pts
-	body.add_child(visual)
-
-	# Upper weathered stone rim and moss overhang
-	var rim := Polygon2D.new()
-	rim.name = "StoneRim"
-	rim.color = Color("#465173")
-	var rim_pts := PackedVector2Array()
-	for i in range(segs + 1):
-		var tx := -half_w + float(i) * step
-		rim_pts.append(Vector2(tx, -40.0))
-	for i in range(segs, -1, -1):
-		var bx := -half_w + float(i) * step
-		var lip := -29.0 + sin(float(i) * 2.7 + from_x * 0.01) * 4.0
-		rim_pts.append(Vector2(bx, lip))
-	rim.polygon = rim_pts
-	body.add_child(rim)
-
-	# Warm top edge highlight line to catch lantern light
-	var top_gleam := Polygon2D.new()
-	top_gleam.name = "TopGleam"
-	top_gleam.color = Color("#6c7aa6")
-	top_gleam.polygon = PackedVector2Array([
-		Vector2(-half_w + 4.0, -40.0),
-		Vector2(half_w - 4.0, -40.0),
-		Vector2(half_w - 8.0, -36.5),
-		Vector2(-half_w + 8.0, -36.5),
-	])
-	body.add_child(top_gleam)
+		var terrain := Sprite2D.new()
+		terrain.name = "TerrainArtwork%d" % section_index
+		terrain.texture = terrain_texture
+		terrain.centered = true
+		terrain.flip_h = section_index % 2 == 1
+		terrain.scale.x = section_width / terrain_texture.get_width()
+		var stone_top := _terrain_stone_top(terrain_texture)
+		terrain.position = Vector2(
+			-width * 0.5 + section_width * (float(section_index) + 0.5),
+			-40.0 - stone_top + terrain_texture.get_height() * 0.5
+		)
+		body.add_child(terrain)
 
 	_world.add_child(body)
+
+
+func _closest_terrain_texture(platform_width: float) -> Texture2D:
+	var closest := TERRAIN_TEXTURES[0]
+	var closest_distortion := INF
+	for texture in TERRAIN_TEXTURES:
+		var scale_ratio := platform_width / float(texture.get_width())
+		var distortion := absf(log(scale_ratio))
+		if distortion < closest_distortion:
+			closest = texture
+			closest_distortion = distortion
+	return closest
+
+
+func _terrain_stone_top(texture: Texture2D) -> float:
+	# Distance from each crop's top edge to the flat stone lip.
+	match texture.resource_path.get_file():
+		"terrain_short.png": return 23.0
+		"terrain_medium.png": return 24.0
+		"terrain_midlong.png": return 25.0
+		_: return 28.0
 
 
 func _add_block(center: Vector2, size: Vector2, color: Color = Color("#34394f")) -> StaticBody2D:
